@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: movie-retrain
+spec:
+  schedule: "0 2 * * *" # daily at 02:00 UTC; adjust as needed
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: retrain
+              image: <your-registry>/movie-recommend:latest
+              command: ["python", "scripts/retrain_runner.py"]
+              env:
+                - name: REDIS_URL
+                  value: "redis://redis:6379/0"
+                - name: MODEL_PATH
+                  value: "/data/models/hybrid_model.joblib"
+                - name: REDIS_RETRAIN_LOCK_TTL
+                  value: "1800"
+          # mount secrets/configmaps as needed for credentials
+          # optionally mount a PersistentVolumeClaim for /data to persist models

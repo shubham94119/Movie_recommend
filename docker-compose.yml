@@ -1,0 +1,32 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:7
+    ports:
+      - '6379:6379'
+
+  app:
+    build: .
+    ports:
+      - '8000:8000'
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - MODEL_PATH=/data/models/hybrid_model.joblib
+      - RETRAIN_TOKEN=replace-this-secret-token
+      - REDLOCK_ENABLED=false
+      - LOG_LEVEL=INFO
+    depends_on:
+      - redis
+    volumes:
+      - ./:/app
+      - ./data:/data
+    restart: unless-stopped
+  frontend:
+    build: ./frontend
+    ports:
+      - '3000:80'
+    environment:
+      - VITE_API_BASE=http://host.docker.internal:8000
+    depends_on:
+      - app
+    restart: unless-stopped

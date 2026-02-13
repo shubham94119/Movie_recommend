@@ -1,0 +1,32 @@
+version: '3.8'
+services:
+  redis1:
+    image: redis:7
+    ports:
+      - '63791:6379'
+
+  redis2:
+    image: redis:7
+    ports:
+      - '63792:6379'
+
+  redis3:
+    image: redis:7
+    ports:
+      - '63793:6379'
+
+  app:
+    build: .
+    ports:
+      - '8000:8000'
+    environment:
+      - REDLOCK_ENABLED=true
+      - REDLOCK_NODES=redis://redis1:6379/0,redis://redis2:6379/0,redis://redis3:6379/0
+      - MODEL_PATH=/data/models/hybrid_model.joblib
+    depends_on:
+      - redis1
+      - redis2
+      - redis3
+    volumes:
+      - ./:/app
+      - ./data:/data
